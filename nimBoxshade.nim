@@ -7,11 +7,24 @@ import os
 import math
 
 proc writeHelp() =
-  quit("synopsis: " & getAppFilename() & " -i=input.fa -o=output.rtf -w=output_width -c/--consensus -r/--ruler -n/--number")
+  let help = """
+  This app takes an protein alignment file (fasta format, equal length, gaps are "-") and output a RTF file with beautiful shading.
+  The methods are the same as boxshade.
+
+  Usage: ./nimBoxshade -i=input.fa -o=output.rtf -w=60 -c/--consensus -r/--ruler -n/--number -t/--threshold=0.5
+  -i: an algined fasta file
+  -o: output file name, default is output.rtf
+  -w: output alignment width, default is 60
+  -c: print consensus line in the output
+  -r: print ruler line on the top
+  -n: print start residual number for each line
+  -t: the fraction of sequences that must agree for a consensus 
+  """
+  quit(help)
 proc writeVersion() =
   quit(getAppFilename() & " version 0.5")
 
-echo paramCount(), " parameters" #, " ", paramStr(1)
+# echo paramCount(), " parameters"
 if paramCount() < 1:
     writeHelp()
 
@@ -21,6 +34,7 @@ var outwidth = 60
 var conflag = false # print consensus line?
 var rulerflag = false # print ruler line?
 var numflag = false # print start number for each line
+var thrfrac = 0.5
 # var p = initOptParser("--left --debug:3 -l -r:2")
 var p = initOptParser( commandLineParams() )
 for kind, key, val in p.getopt():
@@ -36,12 +50,11 @@ for kind, key, val in p.getopt():
     of "consensus", "c": conflag = true
     of "ruler", "r": rulerflag = true
     of "number", "n": numflag = true
+    of "threshold", "t": thrfrac = parseFloat(val)
   of cmdEnd: assert(false) # cannot happen
 if filename == "":
   # no filename has been given, so we show the help
   writeHelp()
-
-# defer: file.close()
 
 ## similar residuals boxshade
 # FYW 1 # ILVM 2 # RKH 3 # DE 4 # GA 5 # TS 6 # NQ 7
@@ -65,8 +78,10 @@ for pairs in zip(aas, grps):
 # var grpDict2 = {1:"FYW", 2:"ILVM", 3:"RKH", 4:"DE",5: "AG", 6:"ST", 7:"NQ"}.toTable # boxshade grp
 let grpDict2 = {1:"FWY", 2:"ILM", 3:"HKR", 4:"DE",5: "AP", 6:"TS", 7:"NQ"}.toTable # Kim et al. grp
 let simDict = {'F':"I", 'I':"FVLM", 'V':"AI", 'A':"TV", 'T':"A"}.toTable # additional similar residuals
-# read a fasta file
-proc readFasta(infile: string): OrderedTable[string, string] =
+
+## function to read a fasta file, return an ordered dictionary and keys
+proc readFasta(infile: string): (OrderedTable[string, string], seq[string]) =
+  var keys: seq[string] 
   let contents = readFile(infile).strip() 
   # echo contents
   let lines = contents.splitLines()
@@ -76,29 +91,30 @@ proc readFasta(infile: string): OrderedTable[string, string] =
     var ll2 = ll.strip()
     if contains(ll2, ">"):
       seqName = ll2.replace(">", "")
+      keys.add(seqName)
       seqDict[seqName] = ""
     else:
       seqDict[seqName].add(ll2)
-  return seqDict
+  return (seqDict, keys)
+
 ## read fasta
 # var testFasta = {"seq1": "MRDRTHELRQGDN", "seq2": "MKDRLEQLKAKQL", "seq3":"MRDRLPDLTACR-"}.toTable  # creates a Table
-var testFasta = readFasta(filename)
-# test making consensus
-proc getKeys(myMap: OrderedTable): seq[string] =
-  var mykeys: seq[string]
-  for key in myMap.keys():
-    mykeys.add(key)
-  return mykeys
+let (testFasta, seqNames) = readFasta(filename)
+# # test making consensus
+# proc getKeys(myMap: OrderedTable): seq[string] =
+#   var mykeys: seq[string]
+#   for key in myMap.keys():
+#     mykeys.add(key)
+#   return mykeys
 
-# test 
-let seqNames = getKeys(testFasta)
+# # test 
+# let seqNames = getKeys(testFasta)
 echo "seq names are ", seqNames
 var nseq = len(testFasta)
 echo "nseq is ", nseq
 let seqLen = len(testFasta[seqNames[0]])
 echo "seqLen is ", seqLen
-var conSeq = "-".repeat(seqLen) # consensus sequence init with spaces
-let thrfrac = 0.5
+var conSeq = " ".repeat(seqLen) # consensus sequence init with spaces
 let thr = thrfrac*float(nseq)
 
 # background and forground color dictionary
@@ -239,8 +255,18 @@ if not numflag:
 # rtf format
 var bgc = 2
 var fgc = 0
+var nlBlock = nseq + 1 # number of lines per block = nseq + 1 blank line
+if rulerflag:
+  nlBlock += 1
+if rulerflag:
+  nlBlock += 1
+if nlBlock > lines_per_page:
+  nlBlock = 0 # if number of sequences > lines_per_page, then do not check
+var lcount = 0 # line count for new page
 while lend < int(ceil(seqLen / outwidth)) * outwidth:
-  # for i in start .. end:
+  if lcount + nlBlock > lines_per_page:
+    lcount = 0
+    rtfContent.add("\\page\n")
   if lend >= seqLen:
     lend = seqLen - 1
   if rulerflag:
@@ -275,6 +301,7 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
   rtfContent.add("\n\\cb2\\cf0 \\line\n")
   lstart += outwidth
   lend += outwidth
+  lcount += nlBlock
   # echo "" # blank line
 
 rtfContent.add("}")
