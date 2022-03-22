@@ -11,8 +11,8 @@ proc writeHelp() =
   This app takes an protein alignment file (fasta format, equal length, gaps are "-") and output a RTF file with beautiful shading.
   The methods are the same as boxshade.
 
-  Usage: ./nimBoxshade -i=input.fa -o=output.rtf -w=60 -c/--consensus -r/--ruler -n/--number -t/--threshold=0.5
-  -i: an algined fasta file
+  Usage: ./nimBoxshade input.fa -o=output.rtf -w=60 -c/--consensus -r/--ruler -n/--number -t/--threshold=0.5
+  the input file is an algined fasta file
   -o: output file name, default is output.rtf
   -w: output alignment width, default is 60
   -c: print consensus line in the output
