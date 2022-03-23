@@ -193,7 +193,7 @@ for i in 0..(seqLen-1):
         fgColorDict[k].add(0)
         bgColorDict[k].add(2)
 
-echo conSeq
+# echo conSeq
 # for k, v in testFasta:
 #   echo v
 #   echo join(fgColorDict[k][1..^1]) # 2 to end, because the first is just init
@@ -243,7 +243,7 @@ for n in countup(4, seqLen-1, 10):
   ruler[n] =  ':' # every 5th is :
 for n in countup(9, seqLen-1, 10):
   ruler[n+1-len($(n+1)) .. n] = $(n+1)
-echo ruler
+# echo ruler
 # outwidth = 60
 var
   lstart = 0 # line start number
