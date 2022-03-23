@@ -272,7 +272,7 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
   if rulerflag:
     var rulerLine = ' '.repeat(minLeftSpace + minNumSpace + 1) & ruler[lstart .. lend]
     # echo rulerLine
-    rtfContent.add(r"\chshdng0\chcbpat2\cb2\cf0 " & rulerLine & "\n\\cb2\\cf0 \\line\n")
+    rtfContent.add(r"\highlight2\cf0 " & rulerLine & "\n\\highlight2\\cf0 \\line\n")
   for k, v in testFasta:
     if numflag:
       numSpace = align($(aaNumDict[k]), minNumSpace)
@@ -282,7 +282,7 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
     # rtf format
     bgc = 2
     fgc = 0
-    rtfContent.add(r"\chshdng0\chcbpat2\cb2\cf0 " & alignLeft(k, minLeftSpace) & numSpace & " ")
+    rtfContent.add(r"\highlight2\cf0 " & alignLeft(k, minLeftSpace) & numSpace & " ")
     for i in lstart .. lend:
       var newbgc = bgColorDict[k][i+1] # bg color 1st is junk
       var newfgc = fgColorDict[k][i+1] 
@@ -291,14 +291,14 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
       else:
         bgc = newbgc
         fgc = newfgc
-        rtfContent.add("\n\\chshdng0\\chcbpat" & $(bgc) & "\\cb" & $(bgc) & "\\cf" & $(fgc) & " " & v[i])
-    rtfContent.add("\n\\cb2\\cf0 \\line\n") # add a newline at the end
+        rtfContent.add("\n\\highlight" & $(bgc) & "\\cf" & $(fgc) & " " & v[i])
+    rtfContent.add("\n\\highlight2\\cf0 \\line\n") # add a newline at the end
   if conflag:
     var conLine = alignLeft("consensus", minLeftSpace) & ' '.repeat(minNumSpace + 1) & conSeq[lstart .. lend]
     # echo conLine
-    rtfContent.add(r"\chshdng0\chcbpat2\cb2\cf0 " & conLine & "\n\\cb2\\cf0 \\line\n")
+    rtfContent.add(r"\highlight2\cf0 " & conLine & "\n\\highlight2\\cf0 \\line\n")
   # add one blank line
-  rtfContent.add("\n\\cb2\\cf0 \\line\n")
+  rtfContent.add("\n\\highlight2\\cf0 \\line\n")
   lstart += outwidth
   lend += outwidth
   lcount += nlBlock
