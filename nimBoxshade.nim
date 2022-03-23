@@ -94,7 +94,7 @@ proc readFasta(infile: string): (OrderedTable[string, string], seq[string]) =
       keys.add(seqName)
       seqDict[seqName] = ""
     else:
-      seqDict[seqName].add(ll2)
+      seqDict[seqName].add(ll2.toUpperAscii())
   return (seqDict, keys)
 
 ## read fasta
