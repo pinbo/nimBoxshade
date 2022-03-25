@@ -210,31 +210,31 @@ for i in 0..(seqLen-1):
         maxAA = j
     conAA = toLowerAscii(maxAA)
   ## set consensus and colors
-  # color: 0=black, 1=gray, 2=white
+  # color: 1=black, 2=gray, 3=white; 0 is the system default (mostly white, but I will define mine here from 1 to 3)
   conSeq[i] = conAA # set consensus at ith postion
   for k, v in testFasta: # k is index, v is value
     var m = v[i]
     # echo "m is ", m, " conAA is ", conAA
     if conAA == ' ': # no consensus, black on white
-      fgColorDict[k][i] = 0
-      bgColorDict[k][i] = 2
+      fgColorDict[k][i] = 1
+      bgColorDict[k][i] = 3
     elif countAA > int(thr): # if seq[i] == consensus, then give it white on black, others white on gray
       if m == toUpperAscii(conAA): # white on black if same as consensus
-        fgColorDict[k][i] = 2
-        bgColorDict[k][i] = 0
-      elif toUpperAscii(conAA) in aas and m in simAA[find(aas, toUpperAscii(conAA))]: # white on gray if similar to consensus
-        fgColorDict[k][i] = 2
+        fgColorDict[k][i] = 3
         bgColorDict[k][i] = 1
-      else:
-        fgColorDict[k][i] = 0
+      elif toUpperAscii(conAA) in aas and m in simAA[find(aas, toUpperAscii(conAA))]: # white on gray if similar to consensus
+        fgColorDict[k][i] = 3
         bgColorDict[k][i] = 2
+      else:
+        fgColorDict[k][i] = 1
+        bgColorDict[k][i] = 3
     else: # no major AA, all similar AA will be white on gray
       if m == toUpperAscii(conAA) or (toUpperAscii(conAA) in aas and m in simAA[find(aas, toUpperAscii(conAA))]): # white on gray if similar to consensus
-        fgColorDict[k][i] = 2
-        bgColorDict[k][i] = 1
-      else:
-        fgColorDict[k][i] = 0
+        fgColorDict[k][i] = 3
         bgColorDict[k][i] = 2
+      else:
+        fgColorDict[k][i] = 1
+        bgColorDict[k][i] = 3
 
 # echo conSeq
 # for k, v in testFasta:
@@ -247,8 +247,7 @@ var rtfContent = """
 {\rtf1\ansi\deff0
 {\fonttbl{\f0\fmodern Courier New;}}
 {\info{\author BOXSHADE}{\title output.rtf}}
-{\colortbl
-\red0\green0\blue0;\red180\green180\blue180;\red255\green255\blue255;}
+{\colortbl;\red0\green0\blue0;\red180\green180\blue180;\red255\green255\blue255;}
 \paperw11880\paperh16820\margl1000\margr500
 \margt910\margb910\sectd\cols1\pard\plain
 \fs20
@@ -319,7 +318,7 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
   if rulerflag:
     var rulerLine = ' '.repeat(minLeftSpace + minNumSpace + 1) & ruler[lstart .. lend]
     # echo rulerLine
-    rtfContent.add(r"\highlight2\cf0 " & rulerLine & "\n\\highlight2\\cf0 \\line\n")
+    rtfContent.add(r"\highlight3\cf1 " & rulerLine & "\n\\highlight3\\cf1 \\line\n")
   for k, v in testFasta:
     if numflag:
       numSpace = align($(aaNumList[k]), minNumSpace)
@@ -329,7 +328,7 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
     # rtf format
     bgc = 2
     fgc = 0
-    rtfContent.add(r"\highlight2\cf0 " & alignLeft(seqNames[k], minLeftSpace) & numSpace & " ")
+    rtfContent.add(r"\highlight3\cf1 " & alignLeft(seqNames[k], minLeftSpace) & numSpace & " ")
     for i in lstart .. lend:
       var newbgc = bgColorDict[k][i] # bg color 
       var newfgc = fgColorDict[k][i] 
@@ -339,13 +338,13 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
         bgc = newbgc
         fgc = newfgc
         rtfContent.add("\n\\highlight" & $bgc & "\\cf" & $fgc & " " & v[i])
-    rtfContent.add("\n\\highlight2\\cf0 \\line\n") # add a newline at the end
+    rtfContent.add("\n\\highlight3\\cf1 \\line\n") # add a newline at the end
   if conflag:
     var conLine = alignLeft("consensus", minLeftSpace) & ' '.repeat(minNumSpace + 1) & conSeq[lstart .. lend]
     # echo conLine
-    rtfContent.add(r"\highlight2\cf0 " & conLine & "\n\\highlight2\\cf0 \\line\n")
+    rtfContent.add(r"\highlight3\cf1 " & conLine & "\n\\highlight3\\cf1 \\line\n")
   # add one blank line
-  rtfContent.add("\n\\highlight2\\cf0 \\line\n")
+  rtfContent.add("\n\\highlight3\\cf1 \\line\n")
   lstart += outwidth
   lend += outwidth
   lcount += nlBlock
