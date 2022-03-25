@@ -61,33 +61,6 @@ if filename == "":
   # no filename has been given, so we show the help
   writeHelp()
 
-## similar residuals boxshade
-# FYW 1 # ILVM 2 # RKH 3 # DE 4 # GA 5 # TS 6 # NQ 7
-# let
-#   aas = ['F', 'Y', 'W', 'I', 'L', 'V', 'M', 'R', 'K', 'H', 'D', 'E', 'G', 'A', 'T', 'S', 'N', 'Q']
-#   grpNum = [1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]
-
-# similar residuals from paper
-# Kim, Y., Sidney, J., Pinilla, C. et al. Derivation of an amino acid similarity matrix for peptide:MHC binding and its application as a Bayesian prior. BMC Bioinformatics 10, 394 (2009). https://doi.org/10.1186/1471-2105-10-394
-# group: mutually similar: FYW 1, ILM 2, HKR 3, DE 4, AP 5, TS 6, NQ 7
-# additional similar: F: I, I:FVLM, V:A, A:TV, T:A
-# let
-#   aas = ['F', 'Y', 'W', 'I', 'L', 'M', 'R', 'K', 'H', 'D', 'E', 'A', 'P', 'T', 'S', 'N', 'Q']
-#   grpNum = [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7] # amino acid groups
-# let grpAA = ["FWY", "ILM", "HKR", "DE", "AP", "TS", "NQ"]
-# let simAA = ['F', 'I', 'V', 'A', 'T' ]
-# let simAAgrp = ["I", "FVLM", "AI", "TV", "A"]
-# var grpDict = initTable[char, int]()
-# for pairs in zip(aas, grpNum):
-#   let (aa, grp) = pairs
-#   grpDict[aa] = grp
-
-# var grpDict2 = {1:"FYW", 2:"ILVM", 3:"RKH", 4:"DE",5: "AG", 6:"ST", 7:"NQ"}.toTable # boxshade grp
-# let grpDict2 = {1:"FWY", 2:"ILM", 3:"HKR", 4:"DE",5: "AP", 6:"TS", 7:"NQ"}.toTable # Kim et al. grp
-# let simDict = {'F':"I", 'I':"FVLM", 'V':"AI", 'A':"TV", 'T':"A"}.toTable # additional similar residuals
-
-
-
 ## function to read a fasta file, return an ordered dictionary and keys
 proc readFasta(infile: string): (seq[string], seq[string]) =
   var keys: seq[string]
@@ -117,7 +90,6 @@ proc readFasta(infile: string): (seq[string], seq[string]) =
 let (testFasta, seqNames) = readFasta(filename)
 # echo testFasta
 # # test 
-# let seqNames = getKeys(testFasta)
 echo "seq names are ", seqNames
 let nseq = len(testFasta)
 echo "nseq is ", nseq
@@ -126,15 +98,10 @@ echo "seqLen is ", seqLen
 var conSeq = " ".repeat(seqLen) # consensus sequence init with spaces
 let thr = thrfrac*float(nseq)
 
-# background and forground color dictionary
-# black = 0 = \red0\green0\blue0
-# gray  = 1 = \red180\green180\blue180
-# white = 2 = \red255\green255\blue255
-# let colors = [r"\red0\green0\blue0", r"\red180\green180\blue180", r"\red255\green255\blue255"]
+# background and forground color
 type
   intSeq = seq[ seq[int] ] # an seq of seq
-# var bgColorDict = initTable[string, seq[int]]()
-# var fgColorDict = initTable[string, seq[int]]()
+
 var
   bgColorDict: intSeq
   fgColorDict: intSeq
@@ -146,6 +113,16 @@ for i in 0 .. nseq - 1:
   bgColorDict.add(bgc)
   fgColorDict.add(bgc)
 
+## similar residuals boxshade
+# FYW 1 # ILVM 2 # RKH 3 # DE 4 # GA 5 # TS 6 # NQ 7
+# let
+#   aas = ['F', 'Y', 'W', 'I', 'L', 'V', 'M', 'R', 'K', 'H', 'D', 'E', 'G', 'A', 'T', 'S', 'N', 'Q']
+#   grpNum = [1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]
+
+# similar residuals from paper
+# Kim, Y., Sidney, J., Pinilla, C. et al. Derivation of an amino acid similarity matrix for peptide:MHC binding and its application as a Bayesian prior. BMC Bioinformatics 10, 394 (2009). https://doi.org/10.1186/1471-2105-10-394
+# group: mutually similar: FYW 1, ILM 2, HKR 3, DE 4, AP 5, TS 6
+# additional similar: F: I, I:FVLM, V:A, A:TV, T:A
 let
   aas =    ['F',   'Y',  'W',  'I',     'L',  'M',  'R',  'K',  'H',  'D', 'E', 'A',   'P', 'T',  'S', 'V'] # v is an outlier
   grpNum = [ 1,     1,    1,    2,       2,    2,    3,    3,    3,    4,   4,   5,     5,   6,    6,   7 ] # amino acid groups
@@ -247,7 +224,7 @@ var rtfContent = """
 {\rtf1\ansi\deff0
 {\fonttbl{\f0\fmodern Courier New;}}
 {\info{\author BOXSHADE}{\title output.rtf}}
-{\colortbl;\red0\green0\blue0;\red180\green180\blue180;\red255\green255\blue255;}
+{\colortbl;\red0\green0\blue0;\red150\green150\blue150;\red255\green255\blue255;}
 \paperw11880\paperh16820\margl1000\margr500
 \margt910\margb910\sectd\cols1\pard\plain
 \fs20
@@ -266,14 +243,11 @@ var maxNameLen = len("consensus")
 for i in seqNames:
   if len(i) > maxNameLen:
     maxNameLen = len(i)
-# if minLeftSpace < maxNameLen:
+
 var minLeftSpace = maxNameLen + 2 # at least 2 spaces between names and sequences
 var minNumSpace = len($seqLen) # convert to seq len to string and get its len.
 echo "max name length is ", maxNameLen
 
-# var formattedSeqNames = seqNames
-# for i in seqNames:
-#   formattedSeqNames[i] = alignLeft(i, minLeftSpace) # make up minLeftSpace with spaces on the right
 ## AA number at the beginning of each line
 var aaNumList: seq[int]
 for k in 0 .. nseq - 1:
