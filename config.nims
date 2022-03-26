@@ -1,7 +1,8 @@
 if defined(emscripten):
   # This path will only run if -d:emscripten is passed to nim.
 
-  --nimcache:tmp # Store intermediate files close by in the ./tmp dir.
+  --nimcache:tmp2 # Store intermediate files close by in the ./tmp dir.
+  --define:release
 
   --os:linux # Emscripten pretends to be linux.
   --cpu:wasm32 # Emscripten is 32bits.
@@ -23,5 +24,5 @@ if defined(emscripten):
   --define:noSignalHandler # Emscripten doesn't support signal handlers.
 
   # Pass this to Emscripten linker to generate html file scaffold for us.
-#   switch("passL", " -O2 -o nimBoxshade.html --shell-file shell_minimal.html -s EXPORTED_RUNTIME_METHODS=[\"callMain\"] --preload-file test.fa@/")
-  switch("passL", " -O3 -o nimBoxshade.js -s EXPORTED_RUNTIME_METHODS=[\"callMain\"] --preload-file test.fa@/")
+#   switch("passL", " -O3 -o nimBoxshadeMini.html --shell-file shell_minimal.html -s EXPORTED_RUNTIME_METHODS=[\"callMain\"] --preload-file test.fa@/")
+  switch("passL", "-O3 -s EXPORTED_RUNTIME_METHODS=[\"callMain\"] --preload-file test.fa@/")

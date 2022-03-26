@@ -19,9 +19,9 @@ Then check the usage by typing:
 
 ## Compile for webassembly
 I get the instruction on how to compile a Nim program to Webassembly [here](https://github.com/treeform/nim_emscripten_tutorial). You need to install [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) first. Then use the command below to compile it:  
-`nim c -d:release -d:emscripten ./nimBoxshadeMini.nim`
+`nim c -d:emscripten -o:nimBoxshade.js ./nimBoxshadeMini.nim`
 
-Then you can use them as the way in [biowasm](https://github.com/biowasm/biowasm).
+Then you can use them as the way in [biowasm](https://github.com/biowasm/biowasm). You can pass more parameters to `emcc` in the last line of file `config.nims`.
 
 # Usage
 
