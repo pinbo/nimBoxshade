@@ -14,7 +14,7 @@ proc writeHelp() =
   This app takes an protein alignment file (fasta format, equal length, gaps are "-") and output a RTF file with beautiful shading.
   The methods are the same as boxshade.
 
-  Usage: ./nimBoxshade input.fa -o=output.rtf -w=60 -c/--consensus -r/--ruler -n/--number -t/--threshold=0.5
+  Usage: ./nimBoxshade input.fa -o=output.rtf -w=60 -c/--consensus -r/--ruler -n/--number -t/--threshold=0.5 -d/--dna
   the input file is an algined fasta file
   -o: output file name, default is output.rtf
   -w: output alignment width, default is 60
@@ -22,11 +22,12 @@ proc writeHelp() =
   -r: print ruler line on the top
   -n: print start residual number for each line
   -t: the fraction of sequences that must agree for a consensus 
+  -d: input is a DNA sequence alignment
   """
   quit(help)
 proc writeVersion() =
 #  quit(getAppFilename() & " version 0.5")
-  quit("nimBoxshade: version 0.5")
+  quit("nimBoxshade: version 1.1")
 
 # echo paramCount(), " parameters"
 if paramCount() < 1:
@@ -38,6 +39,7 @@ var outwidth = 60
 var conflag = false # print consensus line?
 var rulerflag = false # print ruler line?
 var numflag = false # print start number for each line
+var dnaflag = false # input is an dna alignment
 var thrfrac = 0.5
 # var p = initOptParser("--left --debug:3 -l -r:2")
 echo "commandLineParams() is ", commandLineParams()
@@ -55,6 +57,7 @@ for kind, key, val in p.getopt():
     of "consensus", "c": conflag = true
     of "ruler", "r": rulerflag = true
     of "number", "n": numflag = true
+    of "dna", "d": dnaflag = true
     of "threshold", "t": thrfrac = parseFloat(val)
   of cmdEnd: assert(false) # cannot happen
 if filename == "":
@@ -123,12 +126,18 @@ for i in 0 .. nseq - 1:
 # Kim, Y., Sidney, J., Pinilla, C. et al. Derivation of an amino acid similarity matrix for peptide:MHC binding and its application as a Bayesian prior. BMC Bioinformatics 10, 394 (2009). https://doi.org/10.1186/1471-2105-10-394
 # group: mutually similar: FYW 1, ILM 2, HKR 3, DE 4, AP 5, TS 6
 # additional similar: F: I, I:FVLM, V:A, A:TV, T:A
-let
-  aas =    ['F',   'Y',  'W',  'I',     'L',  'M',  'R',  'K',  'H',  'D', 'E', 'A',   'P', 'T',  'S', 'V'] # v is an outlier
-  grpNum = [ 1,     1,    1,    2,       2,    2,    3,    3,    3,    4,   4,   5,     5,   6,    6,   7 ] # amino acid groups
-  simAA =  ["WYI", "WF", "FY", "FVLM",  "IM", "IL", "KH", "RH", "KR", "E", "D", "VPT", "A", "AS", "T", "IA"]
-  grpAA = ["FWY", "ILM", "HKR", "DE", "AP", "TS", "V"]
+var
+  aas =    @['F',   'Y',  'W',  'I',     'L',  'M',  'R',  'K',  'H',  'D', 'E', 'A',   'P', 'T',  'S', 'V'] # v is an outlier
+  grpNum = @[ 1,     1,    1,    2,       2,    2,    3,    3,    3,    4,   4,   5,     5,   6,    6,   7 ] # amino acid groups
+  simAA =  @["WYI", "WF", "FY", "FVLM",  "IM", "IL", "KH", "RH", "KR", "E", "D", "VPT", "A", "AS", "T", "IA"]
+  grpAA = @["FWY", "ILM", "HKR", "DE", "AP", "TS", "V"]
 
+if dnaflag:
+  aas =    @['A',  'G',  'R',  'C',   'T',  'Y' ]
+  grpNum = @[ 1,    1,    1,    2,     2,    2  ] # amino acid groups
+  simAA =  @["GR", "AR", "AG", "TY",  "CY", "CT"]
+  grpAA =  @["AGR", "CTY"]
+  
 # proc freq [T] (ss: openArray[T]): (seq[T], seq[int], T, int) =
 #   var keys: openArray[T]
 #   var freqs: seq[int]
@@ -239,7 +248,9 @@ let
   lines_per_page = int((dev_maxy - dev_miny) / dev_ysize)
 
 # var minLeftSpace = 16 # names and line numbers on the left
-var maxNameLen = len("consensus")
+var maxNameLen = 0
+if conflag:
+  maxNameLen = len("consensus")
 for i in seqNames:
   if len(i) > maxNameLen:
     maxNameLen = len(i)
