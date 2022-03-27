@@ -75,7 +75,7 @@ proc readFasta(infile: string): (seq[string], seq[string]) =
 #   var seqDict = initOrderedTable[string, string]()
   var seqName = ""
   for ll in lines:
-    var ll2 = ll.strip().toUpperAscii()
+    var ll2 = ll.strip()
     if contains(ll2, ">"):
       seqName = ll2.replace(">", "")
       keys.add(seqName)
@@ -83,7 +83,7 @@ proc readFasta(infile: string): (seq[string], seq[string]) =
         allSeqs.add(seqs)
         seqs = ""
     else:
-      seqs.add(ll2)
+      seqs.add(ll2.toUpperAscii())
   # in the end
   allSeqs.add(seqs)
   return (allSeqs, keys)
