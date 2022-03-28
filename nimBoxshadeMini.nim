@@ -14,7 +14,7 @@ proc writeHelp() =
   This app takes an protein alignment file (fasta format, equal length, gaps are "-") and output a RTF file with beautiful shading.
   The methods are the same as boxshade.
 
-  Usage: ./nimBoxshade input.fa -o=output.rtf -w=60 -c/--consensus -r/--ruler -n/--number -t/--threshold=0.5 -d/--dna
+  Usage: ./nimBoxshade input.fa -o=output.rtf -w=60 -c/--consensus -r/--ruler -n/--number -t/--threshold=0.5 -d/--dna --ifg=255,255,255 --ibg=0,0,0 --sfg=255,255,255 --sbg=150,150,150
   the input file is an algined fasta file
   -o: output file name, default is output.rtf
   -w: output alignment width, default is 60
@@ -23,11 +23,15 @@ proc writeHelp() =
   -n: print start residual number for each line
   -t: the fraction of sequences that must agree for a consensus 
   -d: input is a DNA sequence alignment
+  --ifg: foreground color for identical residuals in r,g,b format (default = white = 255,255,255)
+  --ibg: background color for identical residuals in r,g,b format (default = black = 0,0,0)
+  --sfg: foreground color for similar residuals in r,g,b format (default = white = 255,255,255)
+  --sbg: background color for similar residuals in r,g,b format (default = white = 150,150,150)
   """
   quit(help)
 proc writeVersion() =
 #  quit(getAppFilename() & " version 0.5")
-  quit("nimBoxshade: version 1.1")
+  quit("nimBoxshade: version 1.2")
 
 # echo paramCount(), " parameters"
 if paramCount() < 1:
@@ -41,6 +45,11 @@ var rulerflag = false # print ruler line?
 var numflag = false # print start number for each line
 var dnaflag = false # input is an dna alignment
 var thrfrac = 0.5
+var
+  ifg = "255,255,255"
+  ibg = "0,0,0"
+  sfg = "255,255,255"
+  sbg = "150,150,150"
 # var p = initOptParser("--left --debug:3 -l -r:2")
 echo "commandLineParams() is ", commandLineParams()
 var p = initOptParser( commandLineParams() )
@@ -59,6 +68,10 @@ for kind, key, val in p.getopt():
     of "number", "n": numflag = true
     of "dna", "d": dnaflag = true
     of "threshold", "t": thrfrac = parseFloat(val)
+    of "ifg": ifg = val
+    of "ibg": ibg = val
+    of "sfg": sfg = val
+    of "sbg": sbg = val
   of cmdEnd: assert(false) # cannot happen
 if filename == "":
   # no filename has been given, so we show the help
@@ -196,31 +209,32 @@ for i in 0..(seqLen-1):
         maxAA = j
     conAA = toLowerAscii(maxAA)
   ## set consensus and colors
-  # color: 1=black, 2=gray, 3=white; 0 is the system default (mostly white, but I will define mine here from 1 to 3)
+  # color: 1=black, 2=white; 3=ifgc, 4=ibgc, 5=sfgc, 6=sbgc
+  # 0 is the system default (mostly white, but I will define mine here from 1 to 3)
   conSeq[i] = conAA # set consensus at ith postion
   for k, v in testFasta: # k is index, v is value
     var m = v[i]
     # echo "m is ", m, " conAA is ", conAA
     if conAA == ' ': # no consensus, black on white
       fgColorDict[k][i] = 1
-      bgColorDict[k][i] = 3
+      bgColorDict[k][i] = 2
     elif countAA > int(thr): # if seq[i] == consensus, then give it white on black, others white on gray
       if m == toUpperAscii(conAA): # white on black if same as consensus
         fgColorDict[k][i] = 3
-        bgColorDict[k][i] = 1
+        bgColorDict[k][i] = 4
       elif toUpperAscii(conAA) in aas and m in simAA[find(aas, toUpperAscii(conAA))]: # white on gray if similar to consensus
-        fgColorDict[k][i] = 3
-        bgColorDict[k][i] = 2
+        fgColorDict[k][i] = 5
+        bgColorDict[k][i] = 6
       else:
         fgColorDict[k][i] = 1
-        bgColorDict[k][i] = 3
+        bgColorDict[k][i] = 2
     else: # no major AA, all similar AA will be white on gray
       if m == toUpperAscii(conAA) or (toUpperAscii(conAA) in aas and m in simAA[find(aas, toUpperAscii(conAA))]): # white on gray if similar to consensus
-        fgColorDict[k][i] = 3
-        bgColorDict[k][i] = 2
+        fgColorDict[k][i] = 5
+        bgColorDict[k][i] = 6
       else:
         fgColorDict[k][i] = 1
-        bgColorDict[k][i] = 3
+        bgColorDict[k][i] = 2
 
 # echo conSeq
 # for k, v in testFasta:
@@ -228,12 +242,19 @@ for i in 0..(seqLen-1):
 #   echo join(fgColorDict[k][1..^1]) # 2 to end, because the first is just init
 #   echo join(bgColorDict[k][1..^1])
 
+# function to convert rgb color to rtf format
+proc formatrgb (rgb: string): string =
+  let cc = rgb.split(",")
+  return r"\red" & cc[0] & r"\green" & cc[1] & r"\blue" & cc[2] & ";"
+
 # write to rtf
 var rtfContent = """
 {\rtf1\ansi\deff0
 {\fonttbl{\f0\fmodern Courier New;}}
 {\info{\author BOXSHADE}{\title output.rtf}}
-{\colortbl;\red0\green0\blue0;\red150\green150\blue150;\red255\green255\blue255;}
+{\colortbl;\red0\green0\blue0;\red255\green255\blue255;
+""" & formatrgb(ifg) & formatrgb(ibg) & formatrgb(sfg) & formatrgb(sbg) & """
+}
 \paperw11880\paperh16820\margl1000\margr500
 \margt910\margb910\sectd\cols1\pard\plain
 \fs20
@@ -303,7 +324,7 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
   if rulerflag:
     var rulerLine = ' '.repeat(minLeftSpace + minNumSpace + 1) & ruler[lstart .. lend]
     # echo rulerLine
-    rtfContent.add(r"\highlight3\cf1 " & rulerLine & "\n\\highlight3\\cf1 \\line\n")
+    rtfContent.add(r"\highlight2\cf1 " & rulerLine & "\n\\highlight2\\cf1 \\line\n")
   for k, v in testFasta:
     if numflag:
       numSpace = align($(aaNumList[k]), minNumSpace)
@@ -313,7 +334,7 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
     # rtf format
     bgc = 2
     fgc = 0
-    rtfContent.add(r"\highlight3\cf1 " & alignLeft(seqNames[k], minLeftSpace) & numSpace & " ")
+    rtfContent.add(r"\highlight2\cf1 " & alignLeft(seqNames[k], minLeftSpace) & numSpace & " ")
     for i in lstart .. lend:
       var newbgc = bgColorDict[k][i] # bg color 
       var newfgc = fgColorDict[k][i] 
@@ -323,13 +344,13 @@ while lend < int(ceil(seqLen / outwidth)) * outwidth:
         bgc = newbgc
         fgc = newfgc
         rtfContent.add("\n\\highlight" & $bgc & "\\cf" & $fgc & " " & v[i])
-    rtfContent.add("\n\\highlight3\\cf1 \\line\n") # add a newline at the end
+    rtfContent.add("\n\\highlight2\\cf1 \\line\n") # add a newline at the end
   if conflag:
     var conLine = alignLeft("consensus", minLeftSpace) & ' '.repeat(minNumSpace + 1) & conSeq[lstart .. lend]
     # echo conLine
-    rtfContent.add(r"\highlight3\cf1 " & conLine & "\n\\highlight3\\cf1 \\line\n")
+    rtfContent.add(r"\highlight2\cf1 " & conLine & "\n\\highlight2\\cf1 \\line\n")
   # add one blank line
-  rtfContent.add("\n\\highlight3\\cf1 \\line\n")
+  rtfContent.add("\n\\highlight2\\cf1 \\line\n")
   lstart += outwidth
   lend += outwidth
   lcount += nlBlock
